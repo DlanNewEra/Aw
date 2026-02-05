@@ -658,163 +658,101 @@ async function deleteData(n){
   input.value = ""; 
 }
 
-// Animasi list awal saat halaman load
-window.addEventListener("DOMContentLoaded",()=>{
-  const initialList = Array.from(userList.children);
-  initialList.forEach((el,i)=>{
-    setTimeout(()=>el.classList.add("fade-in"), i*100);
-  });
-});
-
-// SHOW TOAST
-function showToast(id){
-  const t = document.getElementById(id);
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),2000);
-}
-
-function setRoleFromBot(role) {
-  allowedRoleFromBot = role; // Contoh: "Partner"
-
-  const roleOptions = document.getElementById("roleOptions");
-  roleOptions.innerHTML = `<div data-role="${role}">${role}</div>`;
-
-  // Reset dropdown display
-  document.getElementById("roleText").innerText = "Pilih Role";
-  document.getElementById("role").value = "";
-}
-
-function createUser(){
-  const u = document.getElementById("user");
-  const p = document.getElementById("pass");
-  const r = document.getElementById("role");
-
-  if(!u.value) return errorInput(u);
-  if(!p.value) return errorInput(p);
-  if(!r.value) return errorInput(r);
-
-  // Tambahkan ke DB
-  db.push({ username: u.value, key: p.value, role: r.value, created_at: Date.now() });
-  saveDB(); // Simpan ke GitHub
-
-  // Simpan snapshot ke localStorage
-  localStorage.setItem("db", JSON.stringify(db));
-
-  // Jika mau langsung login user baru
-  localStorage.setItem("username", u.value);
-  localStorage.setItem("role", r.value);
-
-  // Update welcome & user info
-  document.getElementById("welcomeUser").innerText = `Welcome, ${u.value}`;
-  document.getElementById("infoUsername").innerText = u.value;
-  document.getElementById("infoRole").innerText = r.value;
-  document.getElementById("modalUsername").innerText = u.value;
-  document.getElementById("modalRole").innerText = r.value;
-
-  // Update list HTML
-  const div = document.createElement("div");
-  div.className = "list";
-  div.innerText = `${u.value} (${r.value})`;
-  userList.appendChild(div);
-
-  showToast("toastCreate");
-
-  u.value = "";
-  p.value = "";
-  r.value = "";
-  document.getElementById("roleText").innerText = "Pilih Role";
-}
-
-// CHANGE PASSWORD
-async function changePassword(){
-  const p = document.getElementById("newPass");
-  if(!p.value) return errorInput(p);
-
-  const username = sessionStorage.getItem("username");
-  if(!username){
-    showToast("toastError");
-    return;
-  }
-
-  // cari user di DB
-  const index = db.findIndex(u => u.username === username);
-  if(index === -1){
-    showToast("toastError");
-    return;
-  }
-
-  // update password
-  db[index].key = p.value;
-
-  // simpan ke GitHub
-  await saveDB();
-
-  // optional: update session (biar konsisten)
-  sessionStorage.setItem("password", p.value);
-
-  showToast("toastPass");
-  p.value = "";
-  closeProfile();
-}
-
-// MENU UTAMA
-function scrollToMenu(){
-  toggleSide(); // cukup buka/tutup sidebar
-}
-
-// klik area luar → dropdown nutup
-document.addEventListener("click", () => {
-  document.getElementById("roleOptions").classList.remove("show");
-});
-
-// LOGOUT
-function logout(){
-  localStorage.removeItem("username");
-  localStorage.removeItem("role");
-  closeProfile(); toggleSide(); showToast("toastLogout");
-  setTimeout(() => { window.location.href = 'index.html'; }, 800);
-}
-
-// DEVELOPER LINKS TOGGLE
-const devToggle = document.querySelector(".sidebar a:nth-child(3)");
-const devLinks = document.querySelector(".dev-links");
-devLinks.style.display = "none"; // default hidden
-
-devToggle.addEventListener("click", ()=>{
-  devLinks.style.display = devLinks.style.display === "none" ? "block" : "none";
-});
-
-const roleSelect  = document.getElementById("roleSelect");
-const roleOptions = document.getElementById("roleOptions");
-const roleText    = document.getElementById("roleText");
-const roleInput   = document.getElementById("role");
-
-// buka dropdown
-roleSelect.addEventListener("click", function(e){
-  e.stopPropagation();
-  roleOptions.classList.toggle("show");
-});
-
-// pilih role
-roleOptions.addEventListener("click", function(e){
-  e.stopPropagation();
-  const item = e.target.closest("div");
-  if(!item) return;
-
-  const val = item.dataset.role;
-  roleText.textContent = val;
-  roleInput.value = val;
-
-  roleOptions.classList.remove("show");
-});
-
-// klik luar → tutup
-document.addEventListener("click", function(){
-  roleOptions.classList.remove("show");
-});
-
-// Initial load
-loadDB();
+// Animasi list awal saat halaman load  
+window.addEventListener("DOMContentLoaded",()=>{  
+  const initialList = Array.from(userList.children);  
+  initialList.forEach((el,i)=>{  
+    setTimeout(()=>el.classList.add("fade-in"), i*100);  
+  });  
+});  
+  
+// SHOW TOAST  
+function showToast(id){  
+  const t = document.getElementById(id);  
+  t.classList.add("show");  
+  setTimeout(()=>t.classList.remove("show"),2000);  
+}  
+  
+function createUser(){  
+  const u=document.getElementById("user");  
+  const p=document.getElementById("pass");  
+  const r=document.getElementById("role");  
+  if(!u.value)return errorInput(u);  
+  if(!p.value)return errorInput(p);  
+  if(!r.value)return errorInput(r);  
+  const div=document.createElement("div");  
+  div.className="list";  
+  div.innerText=`${u.value} (${r.value})`;  
+  userList.appendChild(div);  
+  showToast("toastCreate");  
+  u.value=""; p.value=""; r.value="";  
+}  
+  
+// CHANGE PASSWORD  
+function changePassword(){  
+  const p=document.getElementById("newPass");  
+  if(!p.value)return errorInput(p);  
+  showToast("toastPass");  
+  p.value=""; closeProfile();  
+}  
+  
+// MENU UTAMA  
+function scrollToMenu(){  
+  toggleSide(); // cukup buka/tutup sidebar  
+}  
+  
+// klik area luar → dropdown nutup  
+document.addEventListener("click", () => {  
+  document.getElementById("roleOptions").classList.remove("show");  
+});  
+  
+// LOGOUT  
+function logout(){  
+  sessionStorage.clear();  
+  closeProfile(); toggleSide(); showToast("toastLogout");  
+  setTimeout(() => { window.location.href = 'index.html'; }, 800);  
+}  
+  
+// DEVELOPER LINKS TOGGLE  
+const devToggle = document.querySelector(".sidebar a:nth-child(3)");  
+const devLinks = document.querySelector(".dev-links");  
+devLinks.style.display = "none"; // default hidden  
+  
+devToggle.addEventListener("click", ()=>{  
+  devLinks.style.display = devLinks.style.display === "none" ? "block" : "none";  
+});  
+  
+const roleSelect  = document.getElementById("roleSelect");  
+const roleOptions = document.getElementById("roleOptions");  
+const roleText    = document.getElementById("roleText");  
+const roleInput   = document.getElementById("role");  
+  
+// buka dropdown  
+roleSelect.addEventListener("click", function(e){  
+  e.stopPropagation();  
+  roleOptions.classList.toggle("show");  
+});  
+  
+// pilih role  
+roleOptions.addEventListener("click", function(e){  
+  e.stopPropagation();  
+  const item = e.target.closest("div");  
+  if(!item) return;  
+  
+  const val = item.dataset.role;  
+  roleText.textContent = val;  
+  roleInput.value = val;  
+  
+  roleOptions.classList.remove("show");  
+});  
+  
+// klik luar → tutup  
+document.addEventListener("click", function(){  
+  roleOptions.classList.remove("show");  
+});  
+  
+// Initial load  
+loadDB();  
 </script>
 </body>
 </html>
