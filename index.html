@@ -249,49 +249,55 @@ function showToast(msg,type){
 }
 
 // Login
-// Login
-document.getElementById('loginBtn').addEventListener('click', async ()=>{
+document.getElementById('loginBtn').addEventListener('click', async () => {
   const u = document.getElementById('username');
   const p = document.getElementById('password');
 
-  // Ambil data users.json (yang diupdate bot)
-  try {
-    const // Ambil data dari GitHub
-try {
-  const GITHUB_CONFIG = {
-    owner: "DlanNewEra",       // username GitHub
-    repo: "username",       // repo tempat JSON
-    file: "users.json",        // nama file JSON
-    branch: "main",            // branch
-    token: "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"   // token PAT-mu
-  };
-
-  const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.file}?ref=${GITHUB_CONFIG.branch}`;
-  const res = await fetch(url, {
-    headers: { Authorization: `token ${GITHUB_CONFIG.token}` }
-  });
-  const data = await res.json();
-  const users = JSON.parse(atob(data.content)); // decode base64
-
-  // Cari user yang cocok
-  const user = users.find(x => x.username === u.value && x.key === p.value);
-  if(!user){
-    u.classList.add('error'); p.classList.add('error');
-    showToast('Login gagal! Username atau password salah','error');
-    setTimeout(()=>{u.classList.remove('error'); p.classList.remove('error');},400);
-    return;
+  if (!u.value || !p.value) {
+    u.classList.add('error');
+    p.classList.add('error');
+    return setTimeout(() => {
+      u.classList.remove('error');
+      p.classList.remove('error');
+    }, 400);
   }
 
-    // Login berhasil
-    showToast(`Login berhasil! Selamat datang, ${user.username}`,'success');
-    // Simpan role & username di sessionStorage (opsional)
+  try {
+    const GITHUB_CONFIG = {
+      owner: "DlanNewEra",
+      repo: "username",
+      file: "users.json",
+      branch: "main",
+      token: "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" // token asli
+    };
+
+    const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.file}?ref=${GITHUB_CONFIG.branch}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `token ${GITHUB_CONFIG.token}` }
+    });
+    const data = await res.json();
+    const users = JSON.parse(atob(data.content));
+
+    const user = users.find(x => x.username === u.value && x.key === p.value);
+    if (!user) {
+      u.classList.add('error');
+      p.classList.add('error');
+      showToast('Login gagal! Username atau password salah', 'error');
+      return setTimeout(() => {
+        u.classList.remove('error');
+        p.classList.remove('error');
+      }, 400);
+    }
+
+    // Login sukses
     sessionStorage.setItem('username', user.username);
     sessionStorage.setItem('role', user.role);
-    setTimeout(()=>{window.location.href='dashboard.html';},1000);
+    showToast(`Login berhasil! Selamat datang, ${user.username}`, 'success');
+    setTimeout(() => window.location.href = 'dashboard.html', 1000);
 
-  } catch(err){
-    showToast('Gagal mengakses user.json!','error');
+  } catch (err) {
     console.error(err);
+    showToast('Gagal mengakses user.json! Pastikan GitHub tersedia', 'error');
   }
 });
 </script>
