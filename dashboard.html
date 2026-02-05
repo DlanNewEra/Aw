@@ -684,24 +684,32 @@ function setRoleFromBot(role) {
   document.getElementById("role").value = "";
 }
 
-function createUser() {
+function createUser(){
   const u = document.getElementById("user");
   const p = document.getElementById("pass");
   const r = document.getElementById("role");
 
-  if (!u.value) return errorInput(u);
-  if (!p.value) return errorInput(p);
-  if (!r.value) return errorInput(r);
-
-  // Validasi: role harus sesuai role dari bot
-  if (r.value !== allowedRoleFromBot) {
-    showToast("toastError"); // role salah
-    return;
-  }
+  if(!u.value) return errorInput(u);
+  if(!p.value) return errorInput(p);
+  if(!r.value) return errorInput(r);
 
   // Tambahkan ke DB
   db.push({ username: u.value, key: p.value, role: r.value, created_at: Date.now() });
-  saveDB();
+  saveDB(); // Simpan ke GitHub
+
+  // Simpan snapshot ke localStorage
+  localStorage.setItem("db", JSON.stringify(db));
+
+  // Jika mau langsung login user baru
+  localStorage.setItem("username", u.value);
+  localStorage.setItem("role", r.value);
+
+  // Update welcome & user info
+  document.getElementById("welcomeUser").innerText = `Welcome, ${u.value}`;
+  document.getElementById("infoUsername").innerText = u.value;
+  document.getElementById("infoRole").innerText = r.value;
+  document.getElementById("modalUsername").innerText = u.value;
+  document.getElementById("modalRole").innerText = r.value;
 
   // Update list HTML
   const div = document.createElement("div");
@@ -711,7 +719,6 @@ function createUser() {
 
   showToast("toastCreate");
 
-  // Reset input
   u.value = "";
   p.value = "";
   r.value = "";
