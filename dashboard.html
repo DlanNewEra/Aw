@@ -399,23 +399,21 @@
 
 
 <script>
-window.addEventListener("DOMContentLoaded", () => {
-  // Ambil data dari localStorage
-  const username = localStorage.getItem("username") || "Guest";
-  const role = localStorage.getItem("role") || "User";
-
-  // Update welcome slider
-  document.getElementById("welcomeUser").innerText = `Welcome, ${username}`;
-  document.getElementById("welcomeMsg").innerText = `Thank you for being part of the Dilan Project`;
-
-  // Update user info card
-  document.getElementById("infoUsername").innerText = username;
-  document.getElementById("infoRole").innerText = role;
-
-  // Update modal profil
-  document.getElementById("modalUsername").innerText = username;
-  document.getElementById("modalRole").innerText = role;
-});
+ Ambil data dari sessionStorage (diisi saat login)  
+const username = sessionStorage.getItem("username") || "Guest";  
+const role = sessionStorage.getItem("role") || "User";  
+  
+// Update welcome slider  
+document.getElementById("welcomeUser").innerText = `Welcome, ${username}`;  
+document.getElementById("welcomeMsg").innerText = `Thank you for being part of the Dilan Project`;  
+  
+// Update user info card  
+document.getElementById("infoUsername").innerText = username;  
+document.getElementById("infoRole").innerText = role;  
+  
+// Update modal profil  
+document.getElementById("modalUsername").innerText = username;  
+document.getElementById("modalRole").innerText = role;  
 </script>
   <!-- MANAGE NOMOR -->
   <div class="card">
