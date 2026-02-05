@@ -398,7 +398,6 @@
 </div>
 
 
-// Ambil data dari localStorage supaya tetap ada walau reload
 const username = localStorage.getItem("username") || "Guest";
 const role = localStorage.getItem("role") || "User";
 
@@ -413,7 +412,6 @@ document.getElementById("infoRole").innerText = role;
 // Update modal profil
 document.getElementById("modalUsername").innerText = username;
 document.getElementById("modalRole").innerText = role;
-
 
   <!-- MANAGE NOMOR -->
   <div class="card">
