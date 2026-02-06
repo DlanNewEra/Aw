@@ -240,7 +240,7 @@
     }
     .overlay-bg.show { opacity:1; pointer-events:auto; }
     
-    <!-- CSS ANIMASI LIST -->
+    /* CSS ANIMASI LIST */
     .list {
       opacity: 0;
       transform: translateY(-10px);
@@ -423,6 +423,44 @@ if (modalUsername) modalUsername.innerText = username;
 if (modalRole) modalRole.innerText = role;
 </script>
 
+<script>
+function roleLabel(r) {
+  return r.replace("_", " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// 🔒 KUNCI ROLE SESUAI LOGIN
+function lockRoleByLogin(role) {
+  const roleOptions = document.getElementById("roleOptions");
+  if (!roleOptions) return;
+
+  roleOptions.innerHTML = "";
+
+  // ⬇️⬇️⬇️ INI DIA TEMPAT MAP-NYA
+  const map = {
+    MODERATOR: ["MODERATOR", "TANGAN_KANAN", "PARTNER", "RESELLER"],
+    TANGAN_KANAN: ["TANGAN_KANAN", "PARTNER", "RESELLER"],
+    PARTNER: ["PARTNER", "RESELLER"],
+    RESELLER: []
+  };
+
+  (map[role] || []).forEach(r => {
+    const div = document.createElement("div");
+    div.dataset.role = r;
+    div.innerText = roleLabel(r);
+    roleOptions.appendChild(div);
+  });
+
+  // Auto pilih kalau cuma satu
+  if (map[role]?.length === 1) {
+    document.getElementById("roleText").innerText = roleLabel(map[role][0]);
+    document.getElementById("role").value = map[role][0];
+  }
+}
+
+// 🔥 PANGGIL SETELAH AMBIL ROLE LOGIN
+lockRoleByLogin(role);
+</script>
+
   <!-- MANAGE NOMOR -->
   <div class="card">
     <div class="section">Manage Nomor</div>
@@ -442,16 +480,16 @@ if (modalRole) modalRole.innerText = role;
   <input id="user" placeholder="Username baru">
   <input id="pass" placeholder="Password baru">
 
-  <!-- CUSTOM ROLE (FIXED) -->
-  <div class="role-select" id="roleSelect">
+  <!-- CUSTOM ROLE (FIXED & SYNC WITH BOT) -->
+<div class="role-select" id="roleSelect">
   <span id="roleText">Pilih Role</span>
   <span class="arrow" id="roleArrow">▾</span>
 
   <div class="role-options" id="roleOptions">
-    <div data-role="Reseller">Reseller</div>
-    <div data-role="Partner">Partner</div>
-    <div data-role="Tangan kanan">Tangan kanan</div>
-    <div data-role="Moderator">Moderator</div>
+    <div data-role="RESELLER">Reseller</div>
+    <div data-role="PARTNER">Partner</div>
+    <div data-role="TANGAN_KANAN">Tangan kanan</div>
+    <div data-role="MODERATOR">Moderator</div>
   </div>
 </div>
 
@@ -701,8 +739,6 @@ function createUser() {
   if (!p.value) return errorInput(p);
   if (!r.value) return errorInput(r);
 
-  // ❌ HAPUS BLOK allowedRoleFromBot
-
   db.push({
     username: u.value,
     key: p.value,
@@ -712,31 +748,17 @@ function createUser() {
 
   saveDB();
 
-  showToast("toastCreate");
-
-  u.value = "";
-  p.value = "";
-  r.value = "";
-  document.getElementById("roleText").innerText = "Pilih Role";
-  }
-
-  // Tambahkan ke DB
-  db.push({ username: u.value, key: p.value, role: r.value, created_at: Date.now() });
-  saveDB();
-
-  // Update list HTML
   const div = document.createElement("div");
-  div.className = "list";
+  div.className = "list fade-in";
   div.innerText = `${u.value} (${r.value})`;
   userList.appendChild(div);
 
   showToast("toastCreate");
 
-  // Reset input
   u.value = "";
   p.value = "";
   r.value = "";
-  document.getElementById("roleText").innerText = "Pilih Role";
+  roleText.innerText = "Pilih Role";
 }
 
 // CHANGE PASSWORD
