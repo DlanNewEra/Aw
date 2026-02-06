@@ -399,10 +399,9 @@
 
 <script>
 // Ambil data dari SESSION STORAGE (hasil login)
-const username = sessionStorage.getItem("username");
-const role = sessionStorage.getItem("role");
+const username = localStorage.getItem("username");
+const role = localStorage.getItem("role");
 
-// Kalau belum login, lempar balik ke login
 if (!username || !role) {
   window.location.href = "index.html";
 }
@@ -430,7 +429,7 @@ function roleLabel(r) {
 
 // 🔒 KUNCI ROLE SESUAI LOGIN
 function lockRoleByLogin(role) {
-  const roleOptions = document.getElementById("roleOptions");
+  const roleOptions = document.getElementById("createRoleOptions");
   if (!roleOptions) return;
 
   roleOptions.innerHTML = "";
@@ -458,7 +457,9 @@ function lockRoleByLogin(role) {
 }
 
 // 🔥 PANGGIL SETELAH AMBIL ROLE LOGIN
-lockRoleByLogin(role);
+window.addEventListener("DOMContentLoaded", () => {
+  lockRoleByLogin(role);
+});
 </script>
 
   <!-- MANAGE NOMOR -->
@@ -475,28 +476,16 @@ lockRoleByLogin(role);
   
   <!-- CREATE USER -->
   <div class="card">
-  <div class="section">Create User</div>
+  <div class="section">Update Password</div>
 
-  <input id="user" placeholder="Username baru">
+  <!-- AUTO DARI LOGIN -->
+  <input id="user" disabled>
+  <input id="role" disabled>
+
+  <!-- PASSWORD BARU -->
   <input id="pass" placeholder="Password baru">
 
-  <!-- CUSTOM ROLE (FIXED & SYNC WITH BOT) -->
-<div class="role-select" id="roleSelect">
-  <span id="roleText">Pilih Role</span>
-  <span class="arrow" id="roleArrow">▾</span>
-
-  <div class="role-options" id="roleOptions">
-    <div data-role="RESELLER">Reseller</div>
-    <div data-role="PARTNER">Partner</div>
-    <div data-role="TANGAN_KANAN">Tangan kanan</div>
-    <div data-role="MODERATOR">Moderator</div>
-  </div>
-</div>
-
-  <!-- hidden input biar JS lama tetap jalan -->
-  <input type="hidden" id="role">
-
-  <button onclick="createUser()">Create</button>
+  <button onclick="createUser()">Update Password</button>
 </div>
 
   <!-- STATISTICS -->
@@ -722,7 +711,7 @@ function showToast(id){
 function setRoleFromBot(role) {
   allowedRoleFromBot = role; // Contoh: "Partner"
 
-  const roleOptions = document.getElementById("roleOptions");
+  const roleOptions = document.getElementById("createRoleOptions");
   roleOptions.innerHTML = `<div data-role="${role}">${role}</div>`;
 
   // Reset dropdown display
@@ -733,18 +722,34 @@ function setRoleFromBot(role) {
 function createUser() {
   const u = document.getElementById("user");
   const p = document.getElementById("pass");
-  const r = document.getElementById("role");
 
-  if (!u.value) return errorInput(u);
   if (!p.value) return errorInput(p);
-  if (!r.value) return errorInput(r);
 
-  db.push({
-    username: u.value,
-    key: p.value,
-    role: r.value,
-    created_at: Date.now()
-  });
+  // 🔥 ambil user & role dari LOGIN (hasil GitHub)
+  const username = localStorage.getItem("username");
+  const role = localStorage.getItem("role");
+
+  if (!username || !role) {
+    alert("Session login habis");
+    return;
+  }
+
+  // 🔎 cari user di db
+  const userIndex = db.findIndex(x => x.username === username);
+
+  if (userIndex === -1) {
+    alert("User tidak ditemukan di database");
+    return;
+  }
+
+  // ✅ UPDATE PASSWORD SAJA
+  db[userIndex].key = p.value;
+  db[userIndex].updated_at = Date.now();
+
+  saveDB(); // fungsi simpan ke GitHub
+
+  showToast("toastCreate");
+}
 
   saveDB();
 
@@ -766,7 +771,7 @@ async function changePassword(){
   const p = document.getElementById("newPass");
   if(!p.value) return errorInput(p);
 
-  const username = sessionStorage.getItem("username");
+  const username = localStorage.getItem("username");
   if(!username){
     showToast("toastError");
     return;
@@ -785,9 +790,6 @@ async function changePassword(){
   // simpan ke GitHub
   await saveDB();
 
-  // optional: update session (biar konsisten)
-  sessionStorage.setItem("password", p.value);
-
   showToast("toastPass");
   p.value = "";
   closeProfile();
@@ -800,12 +802,12 @@ function scrollToMenu(){
 
 // klik area luar → dropdown nutup
 document.addEventListener("click", () => {
-  document.getElementById("roleOptions").classList.remove("show");
+  document.getElementById("createRoleOptions").classList.remove("show");
 });
 
 // LOGOUT
 function logout(){
-  sessionStorage.clear(); // 🔥 FIX
+  localStorage.clear(); // 🔥 FIX
   closeProfile();
   toggleSide();
   showToast("toastLogout");
@@ -824,7 +826,7 @@ devToggle.addEventListener("click", ()=>{
 });
 
 const roleSelect  = document.getElementById("roleSelect");
-const roleOptions = document.getElementById("roleOptions");
+const roleOptions = document.getElementById("createRoleOptions");
 const roleText    = document.getElementById("roleText");
 const roleInput   = document.getElementById("role");
 
@@ -841,7 +843,7 @@ roleOptions.addEventListener("click", function(e){
   if(!item) return;
 
   const val = item.dataset.role;
-  roleText.textContent = val;
+  roleText.textContent = roleLabel(val);
   roleInput.value = val;
 
   roleOptions.classList.remove("show");
@@ -856,4 +858,4 @@ document.addEventListener("click", function(){
 loadDB();
 </script>
 </body>
-</html>
+  </html>
