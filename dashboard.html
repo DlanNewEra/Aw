@@ -815,7 +815,7 @@ async function changePassword(){
 
   // ❌ SESSION HABIS
   if(!username || !role){
-    showToast("toastError");
+    showToast("toastPassFail");
     return setTimeout(()=>window.location.href="index.html",800);
   }
 
@@ -828,13 +828,13 @@ async function changePassword(){
       el.classList.add("error");
       setTimeout(()=>el.classList.remove("error"),400);
     });
-    return showToast("toastError");
+    return showToast("toastPassFail");
   }
 
   // 🔎 CARI USER
   const index = db.findIndex(x => x.username === username);
   if(index === -1){
-    showToast("toastError");
+    showToast("toastPassFail");
     return;
   }
 
@@ -900,7 +900,7 @@ async function changePasswordManual() {
   const index = db.findIndex(x => x.username === u && x.role === r);
 
   if (index === -1) {
-    showToast("toastError"); // user / role tidak cocok
+    showToast("toastPassFail"); // user / role tidak cocok
     return;
   }
 
