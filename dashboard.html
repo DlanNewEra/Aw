@@ -398,28 +398,42 @@
 </div>
 
 <script>
-// Ambil data dari SESSION STORAGE (hasil login)
-const username = localStorage.getItem("username");
-const role = localStorage.getItem("role");
+document.addEventListener("DOMContentLoaded", () => {
+  // Ambil data dari localStorage (hasil login)
+  const username = localStorage.getItem("username");
+  const role = localStorage.getItem("role");
 
-if (!username || !role) {
-  window.location.href = "index.html";
-}
+  // Kalau belum login → balikin ke index
+  if (!username || !role) {
+    window.location.replace("index.html");
+    return;
+  }
 
-// Update Welcome
-document.getElementById("welcomeUser").innerText = `Welcome, ${username}`;
-document.getElementById("welcomeMsg").innerText = `Thank you for being part of the Dilan Project`;
+  // Update Welcome
+  const welcomeUser = document.getElementById("welcomeUser");
+  const welcomeMsg = document.getElementById("welcomeMsg");
 
-// Update User Info
-document.getElementById("infoUsername").innerText = username;
-document.getElementById("infoRole").innerText = role;
+  if (welcomeUser) {
+    welcomeUser.innerText = `Welcome, ${username}`;
+  }
+  if (welcomeMsg) {
+    welcomeMsg.innerText = `Thank you for being part of the Dilan Project`;
+  }
 
-// Update Modal Profile (kalau ada)
-const modalUsername = document.getElementById("modalUsername");
-const modalRole = document.getElementById("modalRole");
+  // Update User Info
+  const infoUsername = document.getElementById("infoUsername");
+  const infoRole = document.getElementById("infoRole");
 
-if (modalUsername) modalUsername.innerText = username;
-if (modalRole) modalRole.innerText = role;
+  if (infoUsername) infoUsername.innerText = username;
+  if (infoRole) infoRole.innerText = role;
+
+  // Update Modal Profile (kalau ada)
+  const modalUsername = document.getElementById("modalUsername");
+  const modalRole = document.getElementById("modalRole");
+
+  if (modalUsername) modalUsername.innerText = username;
+  if (modalRole) modalRole.innerText = role;
+});
 </script>
 
 <script>
@@ -480,7 +494,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   <!-- AUTO DARI LOGIN -->
   <input id="user" disabled>
-  <input id="role" disabled>
+  <input id="roleInput" disabled>
 
   <!-- PASSWORD BARU -->
   <input id="pass" placeholder="Password baru">
@@ -858,4 +872,4 @@ document.addEventListener("click", function(){
 loadDB();
 </script>
 </body>
-  </html>
+</html>
