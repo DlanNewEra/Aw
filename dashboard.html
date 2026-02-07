@@ -375,7 +375,7 @@
     <input id="verifyRole" placeholder="Ketik role kamu (MODERATOR)">
     <input id="newPass" type="password" placeholder="Password baru">
 
-    <button id="btnChangePass">Ganti Password</button>
+    <button id="btnChangePass" disabled>Ganti Password</button>
     <button style="background:#ef4444;color:#fff" onclick="logout()">🚪 Logout</button>
   </div>
 </div>
@@ -528,7 +528,7 @@ window.addEventListener("DOMContentLoaded", () => {
   <div class="section">Change Password (Manual)</div>
 
   <input id="user" placeholder="Username (contoh: dilan)">
-  <input id="role" placeholder="Role (MODERATOR / PARTNER / dll)">
+  <input id="manualRole" placeholder="Role (MODERATOR / PARTNER / dll)">
   <input id="pass" type="password" placeholder="Password baru">
 
   <button onclick="changePasswordManual()">Update Password</button>
@@ -907,7 +907,7 @@ function updateMyPassword() {
 }
 
 async function changePasswordProfile(uInputId, rInputId, pInputId){
-  if(!db || db.length === 0){
+  if(!dbReady){
     alert("Database belum siap, coba refresh halaman");
     return;
   }
@@ -973,42 +973,41 @@ async function changePasswordProfile(uInputId, rInputId, pInputId){
 // Ganti Pasword
 async function changePasswordManual() {
   const uInput = document.getElementById("user");
-  const rInput = document.getElementById("role");
+  const rInput = document.getElementById("manualRole"); // ✅ pakai ID baru
   const pInput = document.getElementById("pass");
 
-  const u = uInput.value.trim().toLowerCase();       // normalisasi lowercase
-  const r = rInput.value.trim().toUpperCase();      // normalisasi uppercase
+  const u = uInput.value.trim().toLowerCase();
+  const r = rInput.value.trim().toUpperCase();
   const p = pInput.value.trim();
 
-  // 🔴 Validasi input kosong → shake + toast
+  // Validasi input kosong → shake + toast
   if (!u) return errorInput(uInput);
   if (!r) return errorInput(rInput);
   if (!p) return errorInput(pInput);
 
-  // 🔎 Pastikan DB sudah ke-load
+  // Pastikan DB sudah ke-load
   if (!Array.isArray(db) || db.length === 0) {
     alert("Database belum siap, coba refresh halaman");
     return;
   }
 
-  // 🔎 Cari user di DB dengan normalisasi
+  // Cari user di DB dengan normalisasi
   const index = db.findIndex(x => 
     x.username.toLowerCase() === u && x.role.toUpperCase() === r
   );
 
   if (index === -1) {
-    // ❌ Input salah → shake + toast
+    // Input salah → shake + toast
     [uInput, rInput].forEach(el => errorInput(el));
     return showToast("toastPassFail");
   }
 
-  // ✅ Update password
+  // Update password
   db[index].key = p;
   db[index].updated_at = Date.now();
-
   await saveDB(); // simpan ke GitHub
 
-  // ✅ Toast sukses + reset input
+  // Toast sukses + reset input
   showToast("toastPassSuccess");
   uInput.value = "";
   rInput.value = "";
@@ -1075,7 +1074,19 @@ document.addEventListener("click", function(){
 });
 
 // Initial load
-loadDB();
+let dbReady = false;
+
+async function initDB() {
+  await loadDB();        // tunggu loadDB selesai
+  dbReady = true;
+  console.log("Database siap!", db);
+
+  // aktifkan tombol ganti password
+  const btn = document.getElementById("btnChangePass");
+  if(btn) btn.disabled = false;
+}
+
+initDB();
 </script>
 </body>
 </html>
