@@ -796,61 +796,65 @@ document.addEventListener("click", () => {
 });
 
 // CHANGE PASSWORD
-async function changePassword(){
-  const u = document.getElementById("verifyUsername");
-  const r = document.getElementById("verifyRole");
-  const p = document.getElementById("newPass");
+async function changePassword() {
+  const uInput = document.getElementById("verifyUsername");
+  const rInput = document.getElementById("verifyRole");
+  const pInput = document.getElementById("newPass");
 
-  // ❌ VALIDASI KOSONG
-  if(!u.value || !r.value || !p.value){
-    [u,r,p].forEach(el=>{
+  const u = uInput.value.trim().toLowerCase(); // normalisasi username
+  const r = rInput.value.trim().toUpperCase(); // normalisasi role
+  const p = pInput.value.trim();
+
+  // ❌ VALIDASI KOSONG → shake + toast
+  if (!u || !r || !p) {
+    [uInput, rInput, pInput].forEach(el => {
       el.classList.add("error");
-      setTimeout(()=>el.classList.remove("error"),400);
+      setTimeout(() => el.classList.remove("error"), 400);
     });
     return showToast("toastError");
   }
 
-  const username = localStorage.getItem("username");
-  const role = localStorage.getItem("role");
+  const username = localStorage.getItem("username")?.toLowerCase();
+  const role = localStorage.getItem("role")?.toUpperCase();
 
   // ❌ SESSION HABIS
-  if(!username || !role){
+  if (!username || !role) {
     showToast("toastPassFail");
-    return setTimeout(()=>window.location.href="index.html",800);
+    return setTimeout(() => window.location.href = "index.html", 800);
   }
 
-  // ❌ VERIFIKASI SALAH
-  if(
-    u.value.trim() !== username ||
-    r.value.trim().toUpperCase() !== role
-  ){
-    [u,r].forEach(el=>{
+  // ❌ VERIFIKASI SALAH → shake + toast
+  if (u !== username || r !== role) {
+    [uInput, rInput].forEach(el => {
       el.classList.add("error");
-      setTimeout(()=>el.classList.remove("error"),400);
+      setTimeout(() => el.classList.remove("error"), 400);
     });
     return showToast("toastPassFail");
   }
 
-  // 🔎 CARI USER
-  const index = db.findIndex(x => x.username === username);
-  if(index === -1){
-    showToast("toastPassFail");
-    return;
+  // 🔎 CARI USER DI DB
+  const index = db.findIndex(x => x.username.toLowerCase() === username && x.role.toUpperCase() === role);
+  if (index === -1) {
+    [uInput, rInput].forEach(el => {
+      el.classList.add("error");
+      setTimeout(() => el.classList.remove("error"), 400);
+    });
+    return showToast("toastPassFail");
   }
 
   // ✅ UPDATE PASSWORD
-  db[index].key = p.value;
+  db[index].key = p;
   db[index].updated_at = Date.now();
 
   await saveDB();
 
   showToast("toastPass");
 
-  // 🔥 AUTO LOGOUT
-  setTimeout(()=>{
+  // 🔥 AUTO LOGOUT setelah sukses
+  setTimeout(() => {
     localStorage.clear();
     window.location.href = "index.html";
-  },1200);
+  }, 1200);
 }
 
 // Ganti Profile
@@ -887,8 +891,8 @@ async function changePasswordManual() {
   const rInput = document.getElementById("role");
   const pInput = document.getElementById("pass");
 
-  const u = uInput.value.trim();
-  const r = rInput.value.trim().toUpperCase();
+  const u = uInput.value.trim().toLowerCase();       // normalisasi lowercase
+  const r = rInput.value.trim().toUpperCase();      // normalisasi uppercase
   const p = pInput.value.trim();
 
   // 🔴 Validasi input kosong → shake + toast
@@ -896,12 +900,21 @@ async function changePasswordManual() {
   if (!r) return errorInput(rInput);
   if (!p) return errorInput(pInput);
 
-  // 🔎 Cari user di DB
-  const index = db.findIndex(x => x.username === u && x.role === r);
+  // 🔎 Pastikan DB sudah ke-load
+  if (!Array.isArray(db) || db.length === 0) {
+    alert("Database belum siap, coba refresh halaman");
+    return;
+  }
+
+  // 🔎 Cari user di DB dengan normalisasi
+  const index = db.findIndex(x => 
+    x.username.toLowerCase() === u && x.role.toUpperCase() === r
+  );
 
   if (index === -1) {
-    showToast("toastPassFail"); // user / role tidak cocok
-    return;
+    // ❌ Input salah → shake + toast
+    [uInput, rInput].forEach(el => errorInput(el));
+    return showToast("toastPassFail");
   }
 
   // ✅ Update password
@@ -910,7 +923,8 @@ async function changePasswordManual() {
 
   await saveDB(); // simpan ke GitHub
 
-  showToast("toastPass"); // toast sukses
+  // ✅ Toast sukses + reset input
+  showToast("toastPass");
   uInput.value = "";
   rInput.value = "";
   pInput.value = "";
