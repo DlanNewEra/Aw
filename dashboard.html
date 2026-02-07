@@ -235,10 +235,18 @@
 
     /* OVERLAY */
     .overlay-bg {
-      position:fixed; inset:0; background:rgba(0,0,0,0.65);
-      opacity:0; pointer-events:none; transition:0.3s; z-index:90;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.3s;
+      z-index: 50; /* turunkan supaya tombol bisa diklik */
     }
-    .overlay-bg.show { opacity:1; pointer-events:auto; }
+    .overlay-bg.show { 
+      opacity: 1; 
+      pointer-events: auto; 
+    }
     
     /* CSS ANIMASI LIST */
     .list {
@@ -346,10 +354,11 @@
 </div>
   <a>❤️ Credit</a>
   <div id="userList">
-    <div class="list">raffi (pt prib)</div>
-    <div class="list">razzy (pt prib)</div>
-    <div class="list">rulz (pt prib)</div>
-    <div class="list">vinxbot (pt prib)</div>
+    <div class="list">ɪᴋʏʏ [ ᴍᴏᴅs sᴄ ]</div>
+    <div class="list">ᴋᴀᴢᴜʀᴀ [ ᴍᴏᴅs sᴄ ]</div>
+    <div class="list">ᴄᴏɢᴀɴᴢ [ ᴍᴏᴅs sᴄ ]</div>
+    <div class="list">sᴀʀᴄʀᴀᴢʏ [ ᴘᴀʀᴛɴᴇʀ ]</div>
+    <div class="list">ɴɪᴢᴀᴍ [ ᴛᴀɴɢᴀɴ ᴋᴀɴᴀɴ sᴄ ]</div>
   </div>
   <a class="logout" onclick="logout()">↩ Log Out</a>
 </div>
@@ -371,11 +380,6 @@
       <b id="modalRole">User</b>
     </div>
 
-    <input id="verifyUsername" placeholder="Ketik username kamu">
-    <input id="verifyRole" placeholder="Ketik role kamu (MODERATOR)">
-    <input id="newPass" type="password" placeholder="Password baru">
-
-    <button id="btnChangePass" disabled>Ganti Password</button>
     <button style="background:#ef4444;color:#fff" onclick="logout()">🚪 Logout</button>
   </div>
 </div>
@@ -522,17 +526,6 @@ window.addEventListener("DOMContentLoaded", () => {
       <div class="bar"></div><div class="bar"></div>
     </div>
   </div>
-  
-  <!-- CREATE USER -->
-  <div class="card">
-  <div class="section">Change Password (Manual)</div>
-
-  <input id="user" placeholder="Username (contoh: dilan)">
-  <input id="manualRole" placeholder="Role (MODERATOR / PARTNER / dll)">
-  <input id="pass" type="password" placeholder="Password baru">
-
-  <button onclick="changePasswordManual()">Update Password</button>
-</div>
 
   <!-- STATISTICS -->
   <div class="card">
@@ -572,9 +565,9 @@ const TELEGRAM = {
 
 const config = {  
   githubname: "DlanNewEra",  
-  githubRepo: "Emperior-V3",  
+  githubRepo: "Emperior-V4",  
   githubFile: "dilan.json",  
-  TokenGithub: "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"  
+  TokenGithub: "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"  
 };  
 
 let db = [];
@@ -588,8 +581,14 @@ document.body.addEventListener('click',(e)=>{
 
 // SIDEBAR
 function toggleSide() {
-  side.classList.toggle("active");
-  ov.classList.toggle("show");
+  const isActive = side.classList.contains("active");
+  if(isActive){
+    side.classList.remove("active");
+    ov.classList.remove("show");
+  } else {
+    side.classList.add("active");
+    ov.classList.add("show");
+  }
 }
 
 // MODAL
@@ -609,22 +608,50 @@ async function sendTelegram(text){
 }
 
 // DATABASE FUNCTIONS
-async function loadDB(){  
+async function loadDB(){
+  // Ambil localStorage dulu
+  let local = localStorage.getItem("dbLocal");
+  let localDB = local ? JSON.parse(local) : [];
+
   try{
-    const res = await axios.get(`https://api.github.com/repos/${config.githubname}/${config.githubRepo}/contents/${config.githubFile}`,{ headers:{Authorization:`token ${config.TokenGithub}`} });  
-    const content = atob(res.data.content);  
-    const json = JSON.parse(content);  
-    db = Array.isArray(json.dbnya)?json.dbnya:[];  
-  }catch(e){ console.log("Load DB error", e); db=[]; }  
+    const res = await axios.get(`https://api.github.com/repos/${config.githubname}/${config.githubRepo}/contents/${config.githubFile}`,{
+      headers:{Authorization:`token ${config.TokenGithub}`} 
+    });
+    const content = atob(res.data.content);
+    const json = JSON.parse(content);
+
+    // gabungkan semua sumber: db lama + localStorage + GitHub, tanpa duplikat
+    db = Array.from(new Set([...(db||[]), ...localDB, ...(json.dbnya||[])]));
+    
+    // update localStorage
+    localStorage.setItem("dbLocal", JSON.stringify(db));
+
+    console.log("Database loaded:", db);
+  }catch(e){
+    console.log("Load DB error", e);
+  }
+}
+
+// SIMPAN KE GITHUB & LOCAL
+async function saveDB(){  
+  saveLocalDB(); // simpan ke localStorage dulu
+  try{  
+    const res = await axios.get(`https://api.github.com/repos/${config.githubname}/${config.githubRepo}/contents/${config.githubFile}`,{ 
+      headers:{Authorization:`token ${config.TokenGithub}`} 
+    });  
+    const sha = res.data.sha;  
+    await axios.put(`https://api.github.com/repos/${config.githubname}/${config.githubRepo}/contents/${config.githubFile}`,{
+      message:"Update DB",
+      content:btoa(JSON.stringify({dbnya:db},null,2)),
+      sha
+    },{
+      headers:{Authorization:`token ${config.TokenGithub}`} 
+    });  
+  }catch(e){ 
+    console.log("Save DB error", e); 
+  }  
 }  
 
-async function saveDB(){  
-  try{  
-    const res = await axios.get(`https://api.github.com/repos/${config.githubname}/${config.githubRepo}/contents/${config.githubFile}`,{ headers:{Authorization:`token ${config.TokenGithub}`} });  
-    const sha = res.data.sha;  
-    await axios.put(`https://api.github.com/repos/${config.githubname}/${config.githubRepo}/contents/${config.githubFile}`,{ message:"Update DB", content:btoa(JSON.stringify({dbnya:db},null,2)), sha },{ headers:{Authorization:`token ${config.TokenGithub}`} });  
-  }catch(e){ console.log("Save DB error", e); }  
-}  
 
 function genLogID(){ return Math.random().toString(36).substr(2,8).toUpperCase(); }
 function getDevice(){return navigator.platform;}
@@ -632,50 +659,57 @@ function getBrowser(){return navigator.userAgent;}
 function execTime(start){return ((performance.now()-start)/1000).toFixed(2)+'s';}
 
 // MANAGE NOMOR DENGAN ANIMASI
-// Fungsi tambah nomor
 async function addData(){  
   const start = performance.now();  
   const input = document.getElementById("num");  
   if(!input.value) return errorInput(input);  
 
-  if(db.includes(input.value)){
+  // Ambil db dari localStorage dulu
+  let localDB = JSON.parse(localStorage.getItem("dbLocal") || "[]");
+
+  // Gabungkan semua db: memory db + localStorage, tanpa duplikat
+  const combinedDB = Array.from(new Set([...db, ...localDB]));
+
+  if(combinedDB.includes(input.value)){
     showToast("toastExists"); 
     return;
   }  
 
-  db.push(input.value);  
+  // Tambah nomor baru ke memory db & localStorage
+  db.push(input.value);
+  localDB.push(input.value);
+  localStorage.setItem("dbLocal", JSON.stringify(localDB));
+
+  // Simpan ke GitHub
   await saveDB();  
+
   const logID = genLogID();  
 
-  // Telegram di background
-  (async()=>{ 
-    await sendTelegram(
-      `🟢 <b>EMPERIOR SYSTEM · CORE</b>
-      ━━━━━━━━━━━━━━━━━━━
-      ⚡ <b>DATABASE INJECTION</b>
-      📱 <b>Target</b>
-      <code>${input.value}</code>
-      📦 <b>Total Records</b>
-      ${db.length}
-      🧾 <b>Log ID</b>
-      <code>${logID}</code>
-      📱 <b>Device</b>
-      ${getDevice()} / ${getBrowser()}
-      ⏱️ <b>Exec Time</b>
-      ${execTime(start)}
-      🔐 <b>Access</b>
-      Administrator
-      🕒 <i>${new Date().toLocaleString()}</i>`
-    );
-  })();
+  // Kirim Telegram setelah semuanya ter-update
+  sendTelegram(
+    `🟢 <b>EMPERIOR SYSTEM · CORE</b>
+    ━━━━━━━━━━━━━━━━━━━
+    ⚡ <b>DATABASE INJECTION</b>
+    📱 <b>Target</b>
+    <code>${input.value}</code>
+    📦 <b>Total Records</b>
+    ${db.length}
+    🧾 <b>Log ID</b>
+    <code>${logID}</code>
+    📱 <b>Device</b>
+    ${getDevice()} / ${getBrowser()}
+    ⏱️ <b>Exec Time</b>
+    ${execTime(start)}
+    🔐 <b>Access</b>
+    Administrator
+    🕒 <i>${new Date().toLocaleString()}</i>`
+  );
 
-  // Tambah nomor ke list dengan animasi
+  // Tambah nomor ke list UI
   const div = document.createElement("div");
   div.className = "list list-new";
   div.innerText = input.value;
   userList.appendChild(div);
-
-  // Jalankan animasi fade in
   setTimeout(()=>div.classList.add("fade-in"), 10);
 
   // Animasi input fade out
@@ -687,6 +721,26 @@ async function addData(){
 
   showToast("toastAdd"); 
 }
+
+// Tambahan: load semua nomor dari db ke UI saat halaman load
+function renderUserList(){
+  const localDB = JSON.parse(localStorage.getItem("dbLocal") || "[]");
+  const allNumbers = Array.from(new Set([...db, ...localDB]));
+  
+  userList.innerHTML = ""; // bersihkan dulu
+  allNumbers.forEach(num => {
+    const div = document.createElement("div");
+    div.className = "list list-new fade-in";
+    div.innerText = num;
+    userList.appendChild(div);
+  });
+}
+
+// panggil saat halaman siap
+window.addEventListener("DOMContentLoaded", () => {
+  loadLocalDB(); // ambil data lokal
+  loadDB().then(renderUserList); // sync GitHub + render UI
+});
 
 // Fungsi hapus nomor
 async function deleteData(n){  
@@ -765,40 +819,6 @@ function setRoleFromBot(role) {
   document.getElementById("role").value = "";
 }
 
-async function createUser() {
-  const p = document.getElementById("pass");
-  if (!p.value) return errorInput(p);
-
-  // ambil session login
-  const username = localStorage.getItem("username");
-  if (!username) {
-    alert("Session login habis");
-    return;
-  }
-
-  // pastikan DB sudah ke-load
-  if (!Array.isArray(db) || db.length === 0) {
-    alert("Database belum siap, coba refresh");
-    return;
-  }
-
-  // cari user
-  const userIndex = db.findIndex(u => u.username === username);
-  if (userIndex === -1) {
-    alert("User tidak ditemukan di database");
-    return;
-  }
-
-  // update password
-  db[userIndex].key = p.value;
-  db[userIndex].updated_at = Date.now();
-
-  await saveDB(); // ⬅️ WAJIB await
-
-  showToast("toastPass");
-  p.value = "";
-}
-
 // Gak Tau 
 function forceUnlockClick(){
   const ov = document.getElementById("ov");
@@ -808,103 +828,13 @@ function forceUnlockClick(){
   }
 }
 
-window.addEventListener("DOMContentLoaded", forceUnlockClick);
+// window.addEventListener("DOMContentLoaded", forceUnlockClick);
 
 // Tutup dropdown role kalau klik di luar
 document.addEventListener("click", () => {
   const opt = document.getElementById("createRoleOptions");
   if (opt) opt.classList.remove("show");
 });
-
-// CHANGE PASSWORD
-async function changePassword() {
-  const uInput = document.getElementById("verifyUsername");
-  const rInput = document.getElementById("verifyRole");
-  const pInput = document.getElementById("newPass");
-
-  const u = uInput.value.trim().toLowerCase(); // normalisasi username
-  const r = rInput.value.trim().toUpperCase(); // normalisasi role
-  const p = pInput.value.trim();
-
-  // ❌ VALIDASI KOSONG → shake + toast
-  if (!u || !r || !p) {
-    [uInput, rInput, pInput].forEach(el => {
-      el.classList.add("error");
-      setTimeout(() => el.classList.remove("error"), 400);
-    });
-    return showToast("toastError");
-  }
-
-  const username = localStorage.getItem("username")?.toLowerCase();
-  const role = localStorage.getItem("role")?.toUpperCase();
-
-  // ❌ SESSION HABIS
-  if (!username || !role) {
-    showToast("toastPassFail");
-    return setTimeout(() => window.location.href = "index.html", 800);
-  }
-
-  // ❌ VERIFIKASI SALAH → shake + toast
-  if (u !== username || r !== role) {
-    [uInput, rInput].forEach(el => {
-      el.classList.add("error");
-      setTimeout(() => el.classList.remove("error"), 400);
-    });
-    return showToast("toastPassFail");
-  }
-
-  // 🔎 CARI USER DI DB
-  const index = db.findIndex(x => x.username.toLowerCase() === username && x.role.toUpperCase() === role);
-  if (index === -1) {
-    [uInput, rInput].forEach(el => {
-      el.classList.add("error");
-      setTimeout(() => el.classList.remove("error"), 400);
-    });
-    return showToast("toastPassFail");
-  }
-
-  // ✅ UPDATE PASSWORD
-  db[index].key = p;
-  db[index].updated_at = Date.now();
-
-  await saveDB();
-
-  showToast("toastPassSuccess");
-
-  // 🔥 AUTO LOGOUT setelah sukses
-  setTimeout(() => {
-    localStorage.clear();
-    window.location.href = "index.html";
-  }, 1200);
-}
-
-// Ganti Profile
-function updateMyPassword() {
-  const p = document.getElementById("newPass").value.trim();
-  if (!p) return alert("Password tidak boleh kosong");
-
-  const username = localStorage.getItem("username");
-  const role = localStorage.getItem("role");
-
-  const index = db.findIndex(
-    x => x.username === username && x.role === role
-  );
-
-  if (index === -1) {
-    alert("User tidak ditemukan");
-    return;
-  }
-
-  db[index].key = p;
-  db[index].updated_at = Date.now();
-  saveDB();
-
-  // 🔥 WAJIB RESET SESSION
-  localStorage.clear();
-
-  alert("Password diganti. Silakan login ulang.");
-  window.location.href = "index.html";
-}
 
 async function changePasswordProfile(uInputId, rInputId, pInputId){
   if(!dbReady){
@@ -970,50 +900,6 @@ async function changePasswordProfile(uInputId, rInputId, pInputId){
   },1200);
 }
 
-// Ganti Pasword
-async function changePasswordManual() {
-  const uInput = document.getElementById("user");
-  const rInput = document.getElementById("manualRole"); // ✅ pakai ID baru
-  const pInput = document.getElementById("pass");
-
-  const u = uInput.value.trim().toLowerCase();
-  const r = rInput.value.trim().toUpperCase();
-  const p = pInput.value.trim();
-
-  // Validasi input kosong → shake + toast
-  if (!u) return errorInput(uInput);
-  if (!r) return errorInput(rInput);
-  if (!p) return errorInput(pInput);
-
-  // Pastikan DB sudah ke-load
-  if (!Array.isArray(db) || db.length === 0) {
-    alert("Database belum siap, coba refresh halaman");
-    return;
-  }
-
-  // Cari user di DB dengan normalisasi
-  const index = db.findIndex(x => 
-    x.username.toLowerCase() === u && x.role.toUpperCase() === r
-  );
-
-  if (index === -1) {
-    // Input salah → shake + toast
-    [uInput, rInput].forEach(el => errorInput(el));
-    return showToast("toastPassFail");
-  }
-
-  // Update password
-  db[index].key = p;
-  db[index].updated_at = Date.now();
-  await saveDB(); // simpan ke GitHub
-
-  // Toast sukses + reset input
-  showToast("toastPassSuccess");
-  uInput.value = "";
-  rInput.value = "";
-  pInput.value = "";
-}
-
 // MENU UTAMA
 function scrollToMenu(){
   toggleSide(); // cukup buka/tutup sidebar
@@ -1073,20 +959,21 @@ document.addEventListener("click", function(){
   roleOptions.classList.remove("show");
 });
 
-// Initial load
-let dbReady = false;
-
-async function initDB() {
-  await loadDB();        // tunggu loadDB selesai
-  dbReady = true;
-  console.log("Database siap!", db);
-
-  // aktifkan tombol ganti password
-  const btn = document.getElementById("btnChangePass");
-  if(btn) btn.disabled = false;
+// ----- LOCAL STORAGE BACKUP -----
+function saveLocalDB(){
+  localStorage.setItem("dbLocal", JSON.stringify(db));
 }
 
-initDB();
+function loadLocalDB(){
+  const local = localStorage.getItem("dbLocal");
+  if(local){
+    db = JSON.parse(local);
+  }
+}
+
+// ----- LOAD DATABASE -----
+loadLocalDB(); // ambil dulu data dari localStorage
+loadDB();      // kemudian sync ke GitHub
 </script>
 </body>
 </html>
