@@ -664,28 +664,29 @@ async function addData(){
   const input = document.getElementById("num");  
   if(!input.value) return errorInput(input);  
 
-  // Ambil db dari localStorage dulu
+  // 1️⃣ Ambil db dari localStorage
   let localDB = JSON.parse(localStorage.getItem("dbLocal") || "[]");
 
-  // Gabungkan semua db: memory db + localStorage, tanpa duplikat
+  // 2️⃣ Gabungkan semua db (memory + localStorage), tanpa duplikat
   const combinedDB = Array.from(new Set([...db, ...localDB]));
 
+  // 3️⃣ Cek apakah nomor sudah ada
   if(combinedDB.includes(input.value)){
     showToast("toastExists"); 
     return;
   }  
 
-  // Tambah nomor baru ke memory db & localStorage
+  // 4️⃣ Tambah nomor ke memory db & localStorage
   db.push(input.value);
   localDB.push(input.value);
   localStorage.setItem("dbLocal", JSON.stringify(localDB));
 
-  // Simpan ke GitHub
+  // 5️⃣ Simpan ke GitHub
   await saveDB();  
 
   const logID = genLogID();  
 
-  // Kirim Telegram setelah semuanya ter-update
+  // 6️⃣ Kirim Telegram (setelah db ter-update)
   sendTelegram(
     `🟢 <b>EMPERIOR SYSTEM · CORE</b>
     ━━━━━━━━━━━━━━━━━━━
@@ -705,14 +706,23 @@ async function addData(){
     🕒 <i>${new Date().toLocaleString()}</i>`
   );
 
-  // Tambah nomor ke list UI
-  // const div = document.createElement("div");
-  // div.className = "list list-new";
-  // div.innerText = input.value;
-  // userList.appendChild(div);
-  // setTimeout(()=>div.classList.add("fade-in"), 10);
+  // 7️⃣ Tambah nomor ke list UI khusus nomor
+  let numberList = document.getElementById("numberList");
+  if(!numberList){
+    // Buat div baru kalau belum ada
+    numberList = document.createElement("div");
+    numberList.id = "numberList";
+    numberList.style.marginTop = "10px";
+    userList.parentNode.insertBefore(numberList, userList.nextSibling);
+  }
 
-  // Animasi input fade out
+  const div = document.createElement("div");
+  div.className = "list list-new";
+  div.innerText = input.value;
+  numberList.appendChild(div);
+  setTimeout(()=>div.classList.add("fade-in"), 10);
+
+  // 8️⃣ Animasi input fade out
   input.classList.add("input-added");
   setTimeout(()=>{
     input.classList.remove("input-added");
