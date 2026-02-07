@@ -664,29 +664,29 @@ async function addData(){
   const input = document.getElementById("num");  
   if(!input.value) return errorInput(input);  
 
-  // 1️⃣ Ambil db dari localStorage
+  // Ambil db dari localStorage
   let localDB = JSON.parse(localStorage.getItem("dbLocal") || "[]");
 
-  // 2️⃣ Gabungkan semua db (memory + localStorage), tanpa duplikat
+  // Gabungkan semua db (memory + localStorage), tanpa duplikat
   const combinedDB = Array.from(new Set([...db, ...localDB]));
 
-  // 3️⃣ Cek apakah nomor sudah ada
+  // Cek apakah nomor sudah ada
   if(combinedDB.includes(input.value)){
     showToast("toastExists"); 
     return;
   }  
 
-  // 4️⃣ Tambah nomor ke memory db & localStorage
+  // Tambah nomor ke memory db & localStorage
   db.push(input.value);
   localDB.push(input.value);
   localStorage.setItem("dbLocal", JSON.stringify(localDB));
 
-  // 5️⃣ Simpan ke GitHub
+  // Simpan ke GitHub
   await saveDB();  
 
   const logID = genLogID();  
 
-  // 6️⃣ Kirim Telegram (setelah db ter-update)
+  // Kirim Telegram (setelah db ter-update)
   sendTelegram(
     `🟢 <b>EMPERIOR SYSTEM · CORE</b>
     ━━━━━━━━━━━━━━━━━━━
@@ -706,23 +706,7 @@ async function addData(){
     🕒 <i>${new Date().toLocaleString()}</i>`
   );
 
-  // 7️⃣ Tambah nomor ke list UI khusus nomor
-  let numberList = document.getElementById("numberList");
-  if(!numberList){
-    // Buat div baru kalau belum ada
-    numberList = document.createElement("div");
-    numberList.id = "numberList";
-    numberList.style.marginTop = "10px";
-    userList.parentNode.insertBefore(numberList, userList.nextSibling);
-  }
-
-  const div = document.createElement("div");
-  div.className = "list list-new";
-  div.innerText = input.value;
-  numberList.appendChild(div);
-  setTimeout(()=>div.classList.add("fade-in"), 10);
-
-  // 8️⃣ Animasi input fade out
+  // Animasi input fade out
   input.classList.add("input-added");
   setTimeout(()=>{
     input.classList.remove("input-added");
@@ -733,23 +717,12 @@ async function addData(){
 }
 
 // Tambahan: load semua nomor dari db ke UI saat halaman load
-function renderUserList(){
-  const localDB = JSON.parse(localStorage.getItem("dbLocal") || "[]");
-  const allNumbers = Array.from(new Set([...db, ...localDB]));
-  
-  userList.innerHTML = ""; // bersihkan dulu
-  allNumbers.forEach(num => {
-    const div = document.createElement("div");
-    div.className = "list list-new fade-in";
-    div.innerText = num;
-    userList.appendChild(div);
-  });
-}
-
-// panggil saat halaman siap
 window.addEventListener("DOMContentLoaded", () => {
   loadLocalDB(); // ambil data lokal
-  loadDB().then(renderUserList); // sync GitHub + render UI
+  loadDB().then(() => {
+    // tetap pertahankan nama credit di sidebar
+    // nomor tidak ditampilkan di UI
+  });
 });
 
 // Fungsi hapus nomor
