@@ -327,7 +327,7 @@
 <div class="toast error" id="toastDelete">🗑 Nomor dihapus!</div>
 <div class="toast info" id="toastExists">⚠️ Nomor sudah terdaftar!</div>
 <div class="toast info" id="toastNotFound">⚠️ Nomor tidak terdaftar!</div>
-<div class="toast success" id="toastPass">🔐 Password berhasil diganti</div>
+<div class="toast success" id="toastPassSuccess">🔐 Password berhasil diganti</div>
 <div class="toast error" id="toastPassFail">❌ Verifikasi gagal</div>
 <div class="toast info" id="toastCreate">🎉 User berhasil dibuat</div>
 <div class="toast success" id="toastPass">🔐 Password diganti</div>
@@ -375,10 +375,31 @@
     <input id="verifyRole" placeholder="Ketik role kamu (MODERATOR)">
     <input id="newPass" type="password" placeholder="Password baru">
 
-    <button onclick="changePassword()">Ganti Password</button>
+    <button id="btnChangePass">Ganti Password</button>
     <button style="background:#ef4444;color:#fff" onclick="logout()">🚪 Logout</button>
   </div>
 </div>
+
+<script>
+const btnChangePass = document.getElementById("btnChangePass");
+
+btnChangePass.addEventListener("click", async () => {
+  btnChangePass.disabled = true; // disable saat loading
+  btnChangePass.innerText = "Memproses...";
+
+  await changePasswordProfile("verifyUsername","verifyRole","newPass");
+
+  // reset button & close modal setelah sukses
+  btnChangePass.disabled = false;
+  btnChangePass.innerText = "Ganti Password";
+  closeProfile();
+
+  // reset input
+  document.getElementById("verifyUsername").value = "";
+  document.getElementById("verifyRole").value = "";
+  document.getElementById("newPass").value = "";
+});
+</script>
 
 <!-- HEADER -->
 <div class="header">
@@ -848,7 +869,7 @@ async function changePassword() {
 
   await saveDB();
 
-  showToast("toastPass");
+  showToast("toastPassSuccess");
 
   // 🔥 AUTO LOGOUT setelah sukses
   setTimeout(() => {
@@ -883,6 +904,70 @@ function updateMyPassword() {
 
   alert("Password diganti. Silakan login ulang.");
   window.location.href = "index.html";
+}
+
+async function changePasswordProfile(uInputId, rInputId, pInputId){
+  if(!db || db.length === 0){
+    alert("Database belum siap, coba refresh halaman");
+    return;
+  }
+
+  const uInput = document.getElementById(uInputId);
+  const rInput = document.getElementById(rInputId);
+  const pInput = document.getElementById(pInputId);
+
+  const u = uInput.value.trim().toLowerCase();
+  const r = rInput.value.trim().toUpperCase();
+  const p = pInput.value.trim();
+
+  if(!u || !r || !p){
+    [uInput, rInput, pInput].forEach(el => el.classList.add("error"));
+    setTimeout(()=>[uInput, rInput, pInput].forEach(el=>el.classList.remove("error")),400);
+    return showToast("toastError");
+  }
+
+  const sessionUsername = localStorage.getItem("username")?.toLowerCase();
+  const sessionRole = localStorage.getItem("role")?.toUpperCase();
+
+  if(!sessionUsername || !sessionRole){
+    showToast("toastPassFail");
+    return setTimeout(()=>window.location.href="index.html",800);
+  }
+
+  if(u !== sessionUsername || r !== sessionRole){
+    [uInput, rInput].forEach(el => el.classList.add("error"));
+    setTimeout(()=>[uInput, rInput].forEach(el=>el.classList.remove("error")),400);
+    return showToast("toastPassFail");
+  }
+
+  const index = db.findIndex(x => 
+    x.username.toLowerCase() === u && x.role.toUpperCase() === r
+  );
+
+  if(index === -1){
+    [uInput, rInput, pInput].forEach(el => el.classList.add("error"));
+    setTimeout(()=>[uInput, rInput, pInput].forEach(el=>el.classList.remove("error")),400);
+    return showToast("toastPassFail");
+  }
+
+  // ✅ Update password
+  db[index].key = p;
+  db[index].updated_at = Date.now();
+
+  await saveDB();
+
+  showToast("toastPassSuccess");
+
+  // reset input
+  uInput.value = "";
+  rInput.value = "";
+  pInput.value = "";
+
+  // 🔥 auto logout setelah ganti password
+  setTimeout(()=>{
+    localStorage.clear();
+    window.location.href="index.html";
+  },1200);
 }
 
 // Ganti Pasword
@@ -924,7 +1009,7 @@ async function changePasswordManual() {
   await saveDB(); // simpan ke GitHub
 
   // ✅ Toast sukses + reset input
-  showToast("toastPass");
+  showToast("toastPassSuccess");
   uInput.value = "";
   rInput.value = "";
   pInput.value = "";
